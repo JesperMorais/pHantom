@@ -2,6 +2,6 @@ build/
 sdkconfig
 sdkconfig.old
 .vscode/
-.devcontainer/*
+.devcontainer/
 build*/*
 .clangd
