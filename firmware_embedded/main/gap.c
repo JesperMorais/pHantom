@@ -1,9 +1,9 @@
 #include "gap.h"
-#include "esp_gap_ble_api.h"
 #include "services/gap/ble_svc_gap.h"
+#include "esp_log.h"
 
 const char* DEVICE_NAME = "Jesp_Device";
-const char* TAG = "GAP";
+static const char* TAG = "GAP";
 
 int gap_init(){
     int rc = 0;
