@@ -5,17 +5,18 @@
 
 /* DFRobot Gravity Analog pH Sensor Meter Kit V2 (SKU: SEN0161-V2)
  *
- * Hardware setup:
- * - Connect sensor signal (blue wire) to GPIO34
- * - Connect VCC (red wire) to 3.3V or 5V (check your sensor version)
+ * Hardware setup for ESP32-C6-WROOM-1:
+ * - Connect sensor signal (blue wire) to GPIO3
+ * - Connect VCC (red wire) to 5V
  * - Connect GND (black wire) to GND
  *
- * Note: GPIO34 is input-only and supports analog reading
+ * Pin mapping ESP32-C6:
+ * - GPIO3 = ADC1_CH3 (analog input)
  */
 
 /* pH sensor configuration */
 #define PH_SENSOR_ADC_UNIT      ADC_UNIT_1
-#define PH_SENSOR_ADC_CHANNEL   ADC_CHANNEL_6  /* GPIO34 on ESP32 */
+#define PH_SENSOR_ADC_CHANNEL   ADC_CHANNEL_3  /* GPIO3 on ESP32-C6 */
 #define PH_SENSOR_ATTEN         ADC_ATTEN_DB_12  /* 0-3.3V range */
 #define PH_SENSOR_BITWIDTH      ADC_BITWIDTH_12  /* 12-bit resolution (0-4095) */
 

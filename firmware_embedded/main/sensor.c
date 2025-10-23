@@ -89,16 +89,18 @@ void sensor_init(void) {
 
     ESP_LOGI(TAG, "pH sensor ADC initialized on channel %d (calibration: %s)",
              PH_SENSOR_ADC_CHANNEL, do_calibration ? "enabled" : "disabled");
+    ESP_LOGI(TAG, "ADC config: Unit=%d, Channel=%d, Atten=%d, Bitwidth=%d",
+             PH_SENSOR_ADC_UNIT, PH_SENSOR_ADC_CHANNEL, PH_SENSOR_ATTEN, PH_SENSOR_BITWIDTH);
 }
 
 /* Read pH value from ADC
  *
  * DFRobot Gravity Analog pH Sensor Meter Kit V2 (SKU: SEN0161-V2)
  *
- * Hardware connection:
- * - Sensor Signal (Blue) → ESP32 GPIO34 (ADC1_CH6)
- * - Sensor VCC (Red)     → ESP32 3.3V or 5V (check sensor version)
- * - Sensor GND (Black)   → ESP32 GND
+ * Hardware connection for ESP32-C6:
+ * - Sensor Signal (Blue) → ESP32-C6 GPIO3 (ADC1_CH3)
+ * - Sensor VCC (Red)     → ESP32-C6 5V
+ * - Sensor GND (Black)   → ESP32-C6 GND
  *
  * Calibration procedure (IMPORTANT!):
  * 1. Prepare pH buffer solutions: pH 4.00, pH 6.86 (or 7.00), pH 9.18
@@ -123,6 +125,9 @@ float sensor_read_ph(void) {
     uint32_t voltage_sum = 0;
     esp_err_t ret;
 
+    int adc_raw_first = 0;
+    int adc_raw_last = 0;
+
     for (int i = 0; i < num_samples; i++) {
         int adc_raw = 0;
         ret = adc_oneshot_read(adc_handle, PH_SENSOR_ADC_CHANNEL, &adc_raw);
@@ -130,6 +135,9 @@ float sensor_read_ph(void) {
             ESP_LOGE(TAG, "ADC read failed: %s", esp_err_to_name(ret));
             continue;
         }
+
+        if (i == 0) adc_raw_first = adc_raw;
+        if (i == num_samples - 1) adc_raw_last = adc_raw;
 
         int voltage_mv = 0;
         if (do_calibration) {
@@ -149,24 +157,31 @@ float sensor_read_ph(void) {
         vTaskDelay(pdMS_TO_TICKS(10));  /* 10ms between samples */
     }
 
+    ESP_LOGI(TAG, "ADC raw readings: first=%d, last=%d (range: 0-4095)", adc_raw_first, adc_raw_last);
+
     uint32_t avg_voltage_mv = voltage_sum / num_samples;
 
     /* Convert voltage to pH value
      *
-     * ⚠️  CALIBRATION REQUIRED! These are default values.
+     * ⚠️  TEMPORARY CALIBRATION based on pH 7.0 buffer reading
      *
-     * After calibrating with pH buffer solutions, update these constants:
+     * Current calibration (measured):
+     * - pH 7.0 buffer reads: 2010mV
+     * - pH 4.0 buffer reads: 2010mV (SAME - sensor needs activation!)
      *
-     * Example: If your calibration gives:
-     * - pH 7.0 buffer reads 2480mV → set neutral_voltage_mv = 2480
-     * - pH 4.0 buffer reads 2657mV → slope = (2480-2657)/(7.0-4.0) = -59.0 mV/pH
+     * Using theoretical slope until sensor is properly activated.
      *
-     * DFRobot Gravity V2 typical values:
-     * - neutral_voltage_mv: 2450-2550mV (measure with pH 7 buffer)
-     * - acid_slope: -55 to -60 mV/pH (negative because voltage drops as pH rises)
+     * TO ACTIVATE SENSOR:
+     * 1. Leave electrode in pH 7.0 buffer for 8-24 hours
+     * 2. Test again with fresh pH 4.0 and pH 7.0 buffers
+     * 3. Update calibration values here after proper activation
+     *
+     * After proper calibration:
+     * - neutral_voltage_mv: Your measured pH 7.0 voltage
+     * - acid_slope: (voltage_pH7 - voltage_pH4) / (7.0 - 4.0)
      */
-    const float neutral_voltage_mv = 2500.0f;  // Voltage at pH 7.0 - CALIBRATE THIS!
-    const float acid_slope = -59.16f;          // mV per pH unit - CALIBRATE THIS!
+    const float neutral_voltage_mv = 2010.0f;  // Measured: pH 7.0 → 2010mV
+    const float acid_slope = -59.16f;          // Theoretical (update after activation!)
     const float neutral_ph = 7.0f;             // Reference pH
 
     /* Calculate pH from voltage using linear equation:

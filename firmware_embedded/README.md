@@ -5,19 +5,22 @@ ESP32 firmware for a BLE beacon that broadcasts pH sensor data in advertising pa
 ## Hardware Requirements
 
 ### Components
-- **ESP32 Development Board** (any ESP32 variant)
+- **ESP32-C6-WROOM-1 Development Board**
 - **DFRobot Gravity Analog pH Sensor Meter Kit V2** (SKU: SEN0161-V2)
 - pH buffer solutions for calibration (pH 4.00, 6.86/7.00, 9.18)
 
-### Wiring
+### Wiring for ESP32-C6
 
-| pH Sensor Wire | ESP32 Pin | Notes |
-|----------------|-----------|-------|
-| Signal (Blue)  | GPIO34    | ADC1_CHANNEL_6 (analog input only) |
-| VCC (Red)      | 3.3V or 5V | Check your sensor version! |
-| GND (Black)    | GND       | Common ground |
+| pH Sensor Wire | ESP32-C6 Pin | Notes |
+|----------------|--------------|-------|
+| Signal (Blue)  | **GPIO3**    | ADC1_CHANNEL_3 (analog input) |
+| VCC (Red)      | **5V**       | DFRobot sensor works with 5V |
+| GND (Black)    | **GND**      | Common ground |
 
-**Important:** GPIO34 is input-only and perfect for ADC readings. Do not use output-only GPIOs!
+**ESP32-C6 Notes:**
+- GPIO3 is ADC1_CH3 on ESP32-C6 (different from standard ESP32!)
+- ESP32-C6 uses RISC-V architecture instead of Xtensa
+- This project is configured for ESP32-C6 target
 
 ## Software Setup
 
@@ -174,16 +177,17 @@ Recommendations:
 
 If you need to use a different GPIO, edit `main/sensor.h`:
 ```c
-#define PH_SENSOR_ADC_CHANNEL   ADC_CHANNEL_X  // See ESP32 pinout
+#define PH_SENSOR_ADC_CHANNEL   ADC_CHANNEL_X  // See ESP32-C6 pinout
 ```
 
-Valid ADC1 channels on ESP32:
-- ADC1_CH0 = GPIO36
-- ADC1_CH3 = GPIO39
-- ADC1_CH4 = GPIO32
-- ADC1_CH5 = GPIO33
-- ADC1_CH6 = GPIO34 ← Default
-- ADC1_CH7 = GPIO35
+Valid ADC1 channels on ESP32-C6:
+- ADC1_CH0 = GPIO0
+- ADC1_CH1 = GPIO1
+- ADC1_CH2 = GPIO2
+- ADC1_CH3 = GPIO3 ← **Default (current)**
+- ADC1_CH4 = GPIO4
+- ADC1_CH5 = GPIO5
+- ADC1_CH6 = GPIO6
 
 **Important:** Use ADC1 channels only (not ADC2) because ADC2 conflicts with WiFi!
 
