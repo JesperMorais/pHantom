@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(idf.py build)",
+      "Bash(python \"C:/Espressif/frameworks/esp-idf-v5.5/tools/idf.py\" build)",
+      "Bash(\"C:/Espressif/python_env/idf5.5_py3.11_env/Scripts/python.exe\" \"C:/Espressif/frameworks/esp-idf-v5.5/tools/idf.py\" build)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
