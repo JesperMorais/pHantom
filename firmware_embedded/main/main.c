@@ -1,12 +1,20 @@
-#include <stdio.h>
-#include "esp_check.h"
-#include "nvs_flash.h"
+#include "common.h"
 #include "gap.h"
-#include "nimble/nimble_port.h"
-#include "host/ble_hs.h"
-#include "host/ble_store.h"
+#include "sensor.h"
 
 static const char* TAG = "MAIN";
+
+void ble_store_config_init(void);
+
+static void on_stack_reset(int reason){
+    ESP_LOGE("MAIN", "on stack reset: Resetting state; reason=%d", reason);
+}
+
+static void on_stack_sync(void){
+    ESP_LOGI(TAG, "BLE stack synced - initializing advertising");
+    /* Initialize advertising when BLE stack is ready */
+    adv_init();
+}
 
 static void nimble_host_config_init(){
     /*Set host cb*/
@@ -16,6 +24,14 @@ static void nimble_host_config_init(){
 
     /* Store host configs*/
     ble_store_config_init();
+}
+
+static void nimble_host_task(void* param) {
+    ESP_LOGI("NIMBLE", "Nimble host started!");
+
+    nimble_port_run();
+
+    vTaskDelete(NULL);
 }
 
 void app_main(void)
@@ -48,4 +64,16 @@ void app_main(void)
 
     nimble_host_config_init();
 
+    /* Initialize pH sensor ADC */
+    sensor_init();
+    ESP_LOGI(TAG, "pH sensor initialized");
+
+    /* Start NimBLE host task */
+    xTaskCreate(nimble_host_task, "Nimble Host", 4*1024, NULL, 5, NULL);
+
+    /* Start sensor reading and broadcasting task */
+    sensor_start_task();
+    ESP_LOGI(TAG, "Sensor task started - broadcasting pH data every %dms", SENSOR_UPDATE_INTERVAL_MS);
+
+    return;
 }
